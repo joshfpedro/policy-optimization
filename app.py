@@ -22,7 +22,7 @@ def load_data():
 
 df_profit_all = load_data()
 
-# --- Define global variables ---
+# --- Define global variables --st-
 # v_min = -20
 # v_max = 0
 
