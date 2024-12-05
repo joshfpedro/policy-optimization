@@ -15,8 +15,8 @@ st.set_page_config(
 # Load data with caching to improve performance
 @st.cache_data
 def load_data():
-    file_name = 'data/processed/simulations/simulations.feather'  # Adjust the path as needed
-    df_profit_all = pd.read_feather(file_name)
+    file_name = 'data/processed/simulations/simulations_dec5.parquet'  # Adjust the path as needed
+    df_profit_all = pd.read_parquet(file_name)
     df_profit_all['Quantile'] = df_profit_all['Quantile'].astype(str)
     return df_profit_all
 
