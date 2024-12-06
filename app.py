@@ -420,89 +420,116 @@ def create_disease_incidence_boxplot(df_boxplot):
     
     return disease_fig
 
-# --- Create filters at the top ---
-st.markdown("### Selection Parameters")
+def create_spray_cost_relationship(df):
+    # Define Dracula color palette
+    dracula_bg = '#282a36'
+    dracula_font = '#f8f8f2'
+    colors = ['#8be9fd', '#50fa7b', '#ff79c6', '#bd93f9']  # Cyan, Green, Pink, Purple
+    
+    # Create figure with secondary y-axis
+    fig = go.Figure()
+    
+    # Define spray periods and their columns
+    spray_periods = {
+        'May': 'Mean Sprays in May',
+        'June': 'Mean Sprays in June',
+        'July': 'Mean Sprays in July',
+        'Late Season': 'Mean Sprays in Late Season'
+    }
+    
+    # Add traces for each period
+    for (period, column), color in zip(spray_periods.items(), colors):
+        fig.add_trace(
+            go.Scatter(
+                x=df[column],
+                y=df['Mean Fungicide Cost'],
+                name=period,
+                mode='markers+lines',
+                marker=dict(
+                    color=color,
+                    size=8,
+                    line=dict(
+                        color=dracula_font,
+                        width=1
+                    )
+                ),
+                line=dict(color=color),
+                opacity=0.7
+            )
+        )
 
-# Create five columns for all filters
-col1, col2, col3, col4, col5 = st.columns(5)
-
-with col1:
-    # Year dropdown
-    years_options = [2014, 2015, 2016, 2017, 'All']
-    year = st.selectbox('Select Year', years_options, index=4)
-
-with col2:
-    # Market Demand dropdown
-    market_demand_options = ['low', 'moderate', 'high']
-    market_demand = st.selectbox(
-        'Select Market Demand',
-        options=market_demand_options,
-        index=0
+    # Update layout
+    fig.update_layout(
+        template=None,
+        plot_bgcolor=dracula_bg,
+        paper_bgcolor=dracula_bg,
+        font=dict(
+            color=dracula_font,
+            size=10
+        ),
+        title=dict(
+            text='Relationship between Fungicide Cost and Spray Frequency by Period',
+            font=dict(
+                color=dracula_font,
+                size=14
+            ),
+            x=0.5,
+            y=0.95,
+            xanchor='center',
+            yanchor='top'
+        ),
+        xaxis=dict(
+            title='Number of Sprays',
+            showgrid=True,
+            gridcolor='rgba(255, 255, 255, 0.1)',
+            zeroline=False,
+            showline=True,
+            mirror=True,
+            linecolor=dracula_font,
+            tickfont=dict(color=dracula_font)
+        ),
+        yaxis=dict(
+            title='Mean Fungicide Cost',
+            showgrid=True,
+            gridcolor='rgba(255, 255, 255, 0.1)',
+            zeroline=False,
+            showline=True,
+            mirror=True,
+            linecolor=dracula_font,
+            tickfont=dict(color=dracula_font)
+        ),
+        legend=dict(
+            orientation='h',
+            yanchor='bottom',
+            y=1.02,
+            xanchor='right',
+            x=1,
+            font=dict(color=dracula_font),
+            bgcolor='rgba(0,0,0,0)'
+        ),
+        showlegend=True
     )
+    
+    return fig
 
-# Filter data based on selections
-df_filtered = df_profit_all.copy()
-if year != 'All':
-    df_filtered = df_filtered[df_filtered['Year'] == int(year)]
-df_filtered = df_filtered[df_filtered['Market Demand'] == market_demand]
-
-# Get unique values for the boxplot filters
-unique_init_prob = sorted(df_filtered['Initial Probability'].unique())
-unique_v6_percent = sorted(df_filtered['V6 Percent'].unique())
-unique_quantiles = sorted(df_filtered['Quantile'].unique())
-
-with col3:
-    # Initial Probability dropdown
-    init_prob_options = [format_prob(prob) for prob in unique_init_prob]
-    init_prob_selected_label = st.selectbox(
-        'Initial Probability of Disease (p₀)',
-        options=init_prob_options
-    )
-    init_prob_selected = unique_init_prob[init_prob_options.index(init_prob_selected_label)]
-
-with col4:
-    # V6 Percent dropdown
-    v6_percent_options = [f"{int(v6 * 100)}%" for v6 in unique_v6_percent]
-    v6_percent_selected_label = st.selectbox(
-        'V6 Percent',
-        options=v6_percent_options
-    )
-    v6_percent_selected = unique_v6_percent[v6_percent_options.index(v6_percent_selected_label)]
-
-with col5:
-    # Quantile dropdown
-    quantile_selected = st.selectbox(
-        'Quantile',
-        options=unique_quantiles
-    )
-
-# Filter data for boxplot
-df_boxplot = df_filtered[
-    (df_filtered['Initial Probability'] == init_prob_selected) &
-    (df_filtered['V6 Percent'] == v6_percent_selected) &
-    (df_filtered['Quantile'] == quantile_selected)
-]
-
-# Prepare year text for the title
-year_text = 'All Years' if year == 'All' else str(year)
-
-# Create the figures
-heatmap_fig = create_heatmap_figure(df_filtered, year_text, market_demand)
-boxplot_fig = create_boxplot_figure(df_boxplot)
-
-# Display plots
+# Update the layout to include the new plot
 col_left, col_right = st.columns([3, 1])
 
 with col_left:
     st.plotly_chart(heatmap_fig, use_container_width=True)
 
 # Create two columns for the smaller plots
-col_right_top, col_right_bottom = st.columns([1, 1])
+col_right_top, col_right_middle, col_right_bottom = st.columns([1, 1, 1])
 
 with col_right_top:
     st.plotly_chart(boxplot_fig, use_container_width=True)
 
-with col_right_bottom:
+with col_right_middle:
     # Create and display the disease incidence boxplot
     disease_boxplot_fig = create_disease_incidence_boxplot(df_boxplot)
     st.plotly_chart(disease_boxplot_fig, use_container_width=True)
+
+with col_right_bottom:
+    # Create and display the spray-cost relationship plot
+    spray_cost_fig = create_spray_cost_relationship(df_filtered)
+    st.plotly_chart(spray_cost_fig, use_container_width=True)
