@@ -325,6 +325,101 @@ def create_boxplot_figure(df_boxplot):
 
     return box_fig
 
+def create_disease_incidence_boxplot(df_boxplot):
+    # Define Dracula color palette
+    dracula_bg = '#282a36'
+    dracula_font = '#f8f8f2'
+    
+    # Create figure
+    disease_fig = go.Figure()
+    
+    # Define months and their corresponding columns
+    months = {
+        'May': 'Disease Incidence May',
+        'June': 'Disease Incidence June',
+        'July': 'Disease Incidence July'
+    }
+    
+    # Define colors for each month
+    colors = ['#8be9fd', '#50fa7b', '#ff79c6']  # Dracula theme colors
+    
+    # Add traces for each month
+    for (month, column), color in zip(months.items(), colors):
+        sprays = sorted(df_boxplot['Sprays in May'].unique())
+        
+        for spray in sprays:
+            df_spray = df_boxplot[df_boxplot['Sprays in May'] == spray]
+            
+            disease_fig.add_trace(
+                go.Box(
+                    y=df_spray[column],
+                    name=str(spray),
+                    legendgroup=month,
+                    legendgrouptitle_text=month,
+                    marker_color=color,
+                    boxmean='sd',
+                    line=dict(color=color),
+                    fillcolor=color,
+                    marker=dict(size=3),
+                    boxpoints='suspectedoutliers',
+                    offsetgroup=month,
+                    showlegend=spray == sprays[0]  # Show legend only for first spray of each month
+                )
+            )
+    
+    # Update layout
+    disease_fig.update_layout(
+        template=None,
+        plot_bgcolor=dracula_bg,
+        paper_bgcolor=dracula_bg,
+        font=dict(
+            color=dracula_font,
+            size=10
+        ),
+        title=dict(
+            text='Disease Incidence by Month vs. Sprays in May',
+            font=dict(
+                color=dracula_font,
+                size=14
+            ),
+            x=0.5,
+            y=0.95,
+            xanchor='center',
+            yanchor='top'
+        ),
+        xaxis_title='Sprays in May',
+        yaxis_title='Disease Incidence',
+        xaxis=dict(
+            tickmode='linear',
+            showgrid=False,
+            zeroline=False,
+            showline=True,
+            mirror=True,
+            linecolor=dracula_font,
+            tickfont=dict(color=dracula_font)
+        ),
+        yaxis=dict(
+            showgrid=False,
+            zeroline=False,
+            showline=True,
+            mirror=True,
+            linecolor=dracula_font,
+            tickfont=dict(color=dracula_font),
+            range=[0, 1]  # Disease incidence is between 0 and 1
+        ),
+        boxmode='group',  # Group boxes by month
+        legend=dict(
+            title='',
+            orientation='h',
+            yanchor='bottom',
+            y=1.02,
+            xanchor='right',
+            x=1
+        )
+    )
+    
+    return disease_fig
+
 # --- Create filters at the top ---
 st.markdown("### Selection Parameters")
 
@@ -401,5 +496,13 @@ col_left, col_right = st.columns([3, 1])
 with col_left:
     st.plotly_chart(heatmap_fig, use_container_width=True)
 
-with col_right:
+# Create two columns for the smaller plots
+col_right_top, col_right_bottom = st.columns([1, 1])
+
+with col_right_top:
     st.plotly_chart(boxplot_fig, use_container_width=True)
+
+with col_right_bottom:
+    # Create and display the disease incidence boxplot
+    disease_boxplot_fig = create_disease_incidence_boxplot(df_boxplot)
+    st.plotly_chart(disease_boxplot_fig, use_container_width=True)
