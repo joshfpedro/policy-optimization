@@ -328,8 +328,8 @@ def create_boxplot_figure(df_boxplot):
 # --- Create filters at the top ---
 st.markdown("### Selection Parameters")
 
-# Create three columns for the main filters
-col1, col2, col3 = st.columns(3)
+# Create five columns for all filters
+col1, col2, col3, col4, col5 = st.columns(5)
 
 with col1:
     # Year dropdown
@@ -357,29 +357,29 @@ unique_v6_percent = sorted(df_filtered['V6 Percent'].unique())
 unique_quantiles = sorted(df_filtered['Quantile'].unique())
 
 with col3:
-    # Create expander for boxplot filters
-    with st.expander("Boxplot Filters", expanded=True):
-        # Initial Probability dropdown
-        init_prob_options = [format_prob(prob) for prob in unique_init_prob]
-        init_prob_selected_label = st.selectbox(
-            'Initial Probability of Disease (p₀)',
-            options=init_prob_options
-        )
-        init_prob_selected = unique_init_prob[init_prob_options.index(init_prob_selected_label)]
+    # Initial Probability dropdown
+    init_prob_options = [format_prob(prob) for prob in unique_init_prob]
+    init_prob_selected_label = st.selectbox(
+        'Initial Probability of Disease (p₀)',
+        options=init_prob_options
+    )
+    init_prob_selected = unique_init_prob[init_prob_options.index(init_prob_selected_label)]
 
-        # V6 Percent dropdown
-        v6_percent_options = [f"{int(v6 * 100)}%" for v6 in unique_v6_percent]
-        v6_percent_selected_label = st.selectbox(
-            'V6 Percent',
-            options=v6_percent_options
-        )
-        v6_percent_selected = unique_v6_percent[v6_percent_options.index(v6_percent_selected_label)]
+with col4:
+    # V6 Percent dropdown
+    v6_percent_options = [f"{int(v6 * 100)}%" for v6 in unique_v6_percent]
+    v6_percent_selected_label = st.selectbox(
+        'V6 Percent',
+        options=v6_percent_options
+    )
+    v6_percent_selected = unique_v6_percent[v6_percent_options.index(v6_percent_selected_label)]
 
-        # Quantile dropdown
-        quantile_selected = st.selectbox(
-            'Quantile',
-            options=unique_quantiles
-        )
+with col5:
+    # Quantile dropdown
+    quantile_selected = st.selectbox(
+        'Quantile',
+        options=unique_quantiles
+    )
 
 # Filter data for boxplot
 df_boxplot = df_filtered[
