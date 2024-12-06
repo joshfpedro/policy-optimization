@@ -357,13 +357,13 @@ def create_disease_incidence_boxplot(df_boxplot):
                     legendgroup=month,
                     legendgrouptitle_text=month,
                     marker_color=color,
-                    boxmean='sd',
+                    boxmean=True,  # Show mean
                     line=dict(color=color),
                     fillcolor=color,
                     marker=dict(size=3),
                     boxpoints='suspectedoutliers',
                     offsetgroup=month,
-                    showlegend=spray == sprays[0]  # Show legend only for first spray of each month
+                    showlegend=True if spray == sprays[0] else False  # Show legend only for first spray of each month
                 )
             )
     
@@ -419,6 +419,98 @@ def create_disease_incidence_boxplot(df_boxplot):
     )
     
     return disease_fig
+
+def create_spray_cost_relationship(df):
+    # Define Dracula color palette
+    dracula_bg = '#282a36'
+    dracula_font = '#f8f8f2'
+    colors = ['#8be9fd', '#50fa7b', '#ff79c6', '#bd93f9']  # Cyan, Green, Pink, Purple
+    
+    # Create figure with secondary y-axis
+    fig = go.Figure()
+    
+    # Define spray periods and their columns
+    spray_periods = {
+        'May': 'Mean Sprays in May',
+        'June': 'Mean Sprays in June',
+        'July': 'Mean Sprays in July',
+        'Late Season': 'Mean Sprays in Late Season'
+    }
+    
+    # Add traces for each period
+    for (period, column), color in zip(spray_periods.items(), colors):
+        fig.add_trace(
+            go.Scatter(
+                x=df[column],
+                y=df['Mean Fungicide Cost'],
+                name=period,
+                mode='markers+lines',
+                marker=dict(
+                    color=color,
+                    size=8,
+                    line=dict(
+                        color=dracula_font,
+                        width=1
+                    )
+                ),
+                line=dict(color=color),
+                opacity=0.7
+            )
+        )
+
+    # Update layout
+    fig.update_layout(
+        template=None,
+        plot_bgcolor=dracula_bg,
+        paper_bgcolor=dracula_bg,
+        font=dict(
+            color=dracula_font,
+            size=10
+        ),
+        title=dict(
+            text='Relationship between Fungicide Cost and Spray Frequency by Period',
+            font=dict(
+                color=dracula_font,
+                size=14
+            ),
+            x=0.5,
+            y=0.95,
+            xanchor='center',
+            yanchor='top'
+        ),
+        xaxis=dict(
+            title='Number of Sprays',
+            showgrid=True,
+            gridcolor='rgba(255, 255, 255, 0.1)',
+            zeroline=False,
+            showline=True,
+            mirror=True,
+            linecolor=dracula_font,
+            tickfont=dict(color=dracula_font)
+        ),
+        yaxis=dict(
+            title='Mean Fungicide Cost',
+            showgrid=True,
+            gridcolor='rgba(255, 255, 255, 0.1)',
+            zeroline=False,
+            showline=True,
+            mirror=True,
+            linecolor=dracula_font,
+            tickfont=dict(color=dracula_font)
+        ),
+        legend=dict(
+            orientation='h',
+            yanchor='bottom',
+            y=1.02,
+            xanchor='right',
+            x=1,
+            font=dict(color=dracula_font),
+            bgcolor='rgba(0,0,0,0)'
+        ),
+        showlegend=True
+    )
+    
+    return fig
 
 # --- Create filters at the top ---
 st.markdown("### Selection Parameters")
@@ -490,19 +582,24 @@ year_text = 'All Years' if year == 'All' else str(year)
 heatmap_fig = create_heatmap_figure(df_filtered, year_text, market_demand)
 boxplot_fig = create_boxplot_figure(df_boxplot)
 
-# Display plots
+# Update the layout to include the new plot
 col_left, col_right = st.columns([3, 1])
 
 with col_left:
     st.plotly_chart(heatmap_fig, use_container_width=True)
 
 # Create two columns for the smaller plots
-col_right_top, col_right_bottom = st.columns([1, 1])
+col_right_top, col_right_middle, col_right_bottom = st.columns([1, 1, 1])
 
 with col_right_top:
     st.plotly_chart(boxplot_fig, use_container_width=True)
 
-with col_right_bottom:
+with col_right_middle:
     # Create and display the disease incidence boxplot
     disease_boxplot_fig = create_disease_incidence_boxplot(df_boxplot)
     st.plotly_chart(disease_boxplot_fig, use_container_width=True)
+
+with col_right_bottom:
+    # Create and display the spray-cost relationship plot
+    spray_cost_fig = create_spray_cost_relationship(df_filtered)
+    st.plotly_chart(spray_cost_fig, use_container_width=True)
