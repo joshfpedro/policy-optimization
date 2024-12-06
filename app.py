@@ -319,25 +319,108 @@ def create_boxplot_figure(df_boxplot):
             mirror=True,
             linecolor=dracula_font,
             tickfont=dict(color=dracula_font),
-            range=[v_min, v_max]  # Set y-axis range to match v_min and v_max
+            range=[v_min, v_max]
         )
     )
 
     return box_fig
 
+def create_disease_boxplot(df_filtered, selected_months):
+    # Define Dracula color palette
+    dracula_bg = '#282a36'
+    dracula_font = '#f8f8f2'
+    
+    # Create the figure
+    fig = go.Figure()
+    
+    # Define colors for each month
+    month_colors = {'May': '#ff5555', 'June': '#50fa7b', 'July': '#8be9fd'}
+    
+    # Add traces for each selected month
+    for month in selected_months:
+        column_name = f'Disease Incidence {month}'
+        
+        # Create box plots for each spray value
+        for spray in sorted(df_filtered['Sprays in May'].unique()):
+            df_spray = df_filtered[df_filtered['Sprays in May'] == spray]
+            
+            fig.add_trace(
+                go.Box(
+                    y=df_spray[column_name],
+                    x=[spray] * len(df_spray),
+                    name=f'{month}',
+                    marker_color=month_colors[month],
+                    boxmean='sd',
+                    marker=dict(size=3),
+                    boxpoints='suspectedoutliers',
+                    legendgroup=month,
+                    showlegend=spray == df_filtered['Sprays in May'].min()  # Show legend only once per month
+                )
+            )
+    
+    fig.update_layout(
+        template=None,
+        plot_bgcolor=dracula_bg,
+        paper_bgcolor=dracula_bg,
+        font=dict(
+            color=dracula_font,
+            size=10
+        ),
+        title=dict(
+            text='Disease Incidence vs. Sprays in May',
+            font=dict(
+                color=dracula_font,
+                size=14
+            ),
+            x=0.5,
+            y=0.95,
+            xanchor='center',
+            yanchor='top'
+        ),
+        xaxis_title='Sprays in May',
+        yaxis_title='Disease Incidence',
+        xaxis=dict(
+            tickmode='linear',
+            showgrid=False,
+            zeroline=False,
+            showline=True,
+            mirror=True,
+            linecolor=dracula_font,
+            tickfont=dict(color=dracula_font)
+        ),
+        yaxis=dict(
+            showgrid=False,
+            zeroline=False,
+            showline=True,
+            mirror=True,
+            linecolor=dracula_font,
+            tickfont=dict(color=dracula_font),
+            range=[0, 1]  # Disease incidence is typically between 0 and 1
+        ),
+        showlegend=True,
+        legend=dict(
+            title='Month',
+            yanchor="top",
+            y=0.99,
+            xanchor="left",
+            x=1.02,
+            font=dict(size=10)
+        )
+    )
+    
+    return fig
+
 # --- Create filters at the top ---
 st.markdown("### Selection Parameters")
 
-# Create five columns for all filters
+# Create row for main filters
 col1, col2, col3, col4, col5 = st.columns(5)
 
 with col1:
-    # Year dropdown
     years_options = [2014, 2015, 2016, 2017, 'All']
     year = st.selectbox('Select Year', years_options, index=4)
 
 with col2:
-    # Market Demand dropdown
     market_demand_options = ['low', 'moderate', 'high']
     market_demand = st.selectbox(
         'Select Market Demand',
@@ -357,7 +440,6 @@ unique_v6_percent = sorted(df_filtered['V6 Percent'].unique())
 unique_quantiles = sorted(df_filtered['Quantile'].unique())
 
 with col3:
-    # Initial Probability dropdown
     init_prob_options = [format_prob(prob) for prob in unique_init_prob]
     init_prob_selected_label = st.selectbox(
         'Initial Probability of Disease (p₀)',
@@ -366,22 +448,41 @@ with col3:
     init_prob_selected = unique_init_prob[init_prob_options.index(init_prob_selected_label)]
 
 with col4:
-    # V6 Percent dropdown
     v6_percent_options = [f"{int(v6 * 100)}%" for v6 in unique_v6_percent]
-    v6_percent_selected_label = st.selectbox(
+    
+v6_percent_selected_label = st.selectbox(
         'V6 Percent',
         options=v6_percent_options
     )
     v6_percent_selected = unique_v6_percent[v6_percent_options.index(v6_percent_selected_label)]
 
 with col5:
-    # Quantile dropdown
     quantile_selected = st.selectbox(
         'Quantile',
         options=unique_quantiles
     )
 
-# Filter data for boxplot
+# Add disease incidence month selection with checkboxes in a horizontal line
+st.markdown("")  # Add some spacing
+month_col1, month_col2, month_col3, *_ = st.columns(5)  # Use 5 columns to match above, but only need 3
+
+with month_col1:
+    show_may = st.checkbox('Show May Disease Incidence', value=True)
+with month_col2:
+    show_june = st.checkbox('Show June Disease Incidence', value=True)
+with month_col3:
+    show_july = st.checkbox('Show July Disease Incidence', value=True)
+
+# Collect selected months
+selected_months = []
+if show_may:
+    selected_months.append('May')
+if show_june:
+    selected_months.append('June')
+if show_july:
+    selected_months.append('July')
+
+# Filter data for profit boxplot
 df_boxplot = df_filtered[
     (df_filtered['Initial Probability'] == init_prob_selected) &
     (df_filtered['V6 Percent'] == v6_percent_selected) &
@@ -393,13 +494,16 @@ year_text = 'All Years' if year == 'All' else str(year)
 
 # Create the figures
 heatmap_fig = create_heatmap_figure(df_filtered, year_text, market_demand)
-boxplot_fig = create_boxplot_figure(df_boxplot)
+profit_boxplot_fig = create_boxplot_figure(df_boxplot)
+disease_boxplot_fig = create_disease_boxplot(df_filtered, selected_months)
 
 # Display plots
+st.markdown("")  # Add some spacing
 col_left, col_right = st.columns([3, 1])
 
 with col_left:
     st.plotly_chart(heatmap_fig, use_container_width=True)
 
 with col_right:
-    st.plotly_chart(boxplot_fig, use_container_width=True)
+    st.plotly_chart(profit_boxplot_fig, use_container_width=True)
+    st.plotly_chart(disease_boxplot_fig, use_container_width=True)
