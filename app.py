@@ -420,6 +420,107 @@ def create_disease_incidence_boxplot(df_boxplot):
     
     return disease_fig
 
+def create_metric_boxplot(df_boxplot, metrics, title, y_label, color_palette='vlag', y_range=None):
+    """
+    Create a boxplot for specified metrics.
+    
+    Args:
+        df_boxplot: DataFrame containing the data
+        metrics: List of column names to plot
+        title: Plot title
+        y_label: Y-axis label
+        color_palette: Color palette to use
+        y_range: Optional y-axis range
+    """
+    # Define Dracula color palette
+    dracula_bg = '#282a36'
+    dracula_font = '#f8f8f2'
+    
+    # Create figure
+    fig = go.Figure()
+    
+    # Get colors for each metric
+    if color_palette == 'dracula':
+        colors = ['#8be9fd', '#50fa7b', '#ff79c6', '#bd93f9']  # Dracula theme colors
+    else:
+        colors = sns.color_palette(color_palette, n_colors=len(metrics)).as_hex()
+    
+    # Add traces for each metric
+    sprays = sorted(df_boxplot['Sprays in May'].unique())
+    
+    for metric, color in zip(metrics, colors):
+        for spray in sprays:
+            df_spray = df_boxplot[df_boxplot['Sprays in May'] == spray]
+            
+            fig.add_trace(
+                go.Box(
+                    y=df_spray[metric],
+                    name=str(spray),
+                    legendgroup=metric,
+                    legendgrouptitle_text=metric.replace('Mean ', '').replace('Disease Incidence ', ''),
+                    marker_color=color,
+                    boxmean=True,
+                    line=dict(color=color),
+                    fillcolor=color,
+                    marker=dict(size=3),
+                    boxpoints='suspectedoutliers',
+                    offsetgroup=metric,
+                    showlegend=True if spray == sprays[0] else False
+                )
+            )
+    
+    # Update layout
+    fig.update_layout(
+        template=None,
+        plot_bgcolor=dracula_bg,
+        paper_bgcolor=dracula_bg,
+        font=dict(
+            color=dracula_font,
+            size=10
+        ),
+        title=dict(
+            text=title,
+            font=dict(
+                color=dracula_font,
+                size=14
+            ),
+            x=0.5,
+            y=0.95,
+            xanchor='center',
+            yanchor='top'
+        ),
+        xaxis_title='Sprays in May',
+        yaxis_title=y_label,
+        xaxis=dict(
+            tickmode='linear',
+            showgrid=False,
+            zeroline=False,
+            showline=True,
+            mirror=True,
+            linecolor=dracula_font,
+            tickfont=dict(color=dracula_font)
+        ),
+        yaxis=dict(
+            showgrid=False,
+            zeroline=False,
+            showline=True,
+            mirror=True,
+            linecolor=dracula_font,
+            tickfont=dict(color=dracula_font),
+            range=y_range
+        ),
+        boxmode='group',
+        legend=dict(
+            title='',
+            orientation='h',
+            yanchor='bottom',
+            y=1.02,
+            xanchor='right',
+            x=1
+        )
+    )
+    
+    return fig
 
 # --- Create filters at the top ---
 st.markdown("### Selection Parameters")
@@ -507,3 +608,51 @@ with col_right_bottom:
     # Create and display the disease incidence boxplot
     disease_boxplot_fig = create_disease_incidence_boxplot(df_boxplot)
     st.plotly_chart(disease_boxplot_fig, use_container_width=True)
+
+# Create columns for additional plots
+col_metrics1, col_metrics2 = st.columns(2)
+
+with col_metrics1:
+    # Disease and Cone Incidence boxplot
+    disease_metrics = ['Disease Incidence May', 'Disease Incidence June', 
+                      'Disease Incidence July', 'Mean Cone Incidence']
+    disease_cone_fig = create_metric_boxplot(
+        df_boxplot,
+        disease_metrics,
+        'Disease and Cone Incidence vs. Sprays in May',
+        'Incidence',
+        'dracula',
+        [0, 1]
+    )
+    st.plotly_chart(disease_cone_fig, use_container_width=True)
+
+    # Price boxplot
+    price_fig = create_metric_boxplot(
+        df_boxplot,
+        ['Mean Price'],
+        'Price vs. Sprays in May',
+        'Price ($)',
+        'viridis'
+    )
+    st.plotly_chart(price_fig, use_container_width=True)
+
+with col_metrics2:
+    # Yield boxplot
+    yield_fig = create_metric_boxplot(
+        df_boxplot,
+        ['Mean Yield'],
+        'Yield vs. Sprays in May',
+        'Yield',
+        'viridis'
+    )
+    st.plotly_chart(yield_fig, use_container_width=True)
+
+    # Cone Color boxplot
+    cone_color_fig = create_metric_boxplot(
+        df_boxplot,
+        ['Mean Cone Color'],
+        'Cone Color vs. Sprays in May',
+        'Cone Color',
+        'viridis'
+    )
+    st.plotly_chart(cone_color_fig, use_container_width=True)
