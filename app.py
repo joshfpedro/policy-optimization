@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import seaborn as sns  # Imported Seaborn for the 'vlag' palette
+import seaborn as sns
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
@@ -15,28 +15,21 @@ st.set_page_config(
 # Load data with caching to improve performance
 @st.cache_data
 def load_data():
-    file_name = 'data/processed/simulations/simulations_dec6.parquet'  # Adjust the path as needed
+    file_name = 'data/processed/simulations/simulations_dec6.parquet'
     df_profit_all = pd.read_parquet(file_name)
     df_profit_all['Quantile'] = df_profit_all['Quantile'].astype(str)
     return df_profit_all
 
 df_profit_all = load_data()
 
-# --- Define global variables --st-
-# v_min = -20
-# v_max = 0
-
+# --- Define global variables ---
 v_min = df_profit_all['Mean Profit Percent Change'].min()
 v_max = df_profit_all['Mean Profit Percent Change'].max()
 
 # --- Define helper functions ---
-
-# Format initial probabilities without trailing zeros
 def format_prob(prob, decimal_places=5):
     formatted = f"{prob:.{decimal_places}f}".rstrip('0').rstrip('.')
     return formatted if formatted else '0'
-
-# --- Define plotting functions ---
 
 def create_heatmap_figure(df_filtered, year_text, market_demand):
     # Get sorted unique V6 Percent and Initial Probability values
@@ -332,104 +325,81 @@ def create_boxplot_figure(df_boxplot):
 
     return box_fig
 
-# --- Define filters (to be displayed below the plots) ---
+# --- Create filters at the top ---
+st.markdown("### Selection Parameters")
 
-# Create placeholders for the plots
-plots_placeholder = st.container()
+# Create three columns for the main filters
+col1, col2, col3 = st.columns(3)
 
-# --- Filter data and create plots ---
+with col1:
+    # Year dropdown
+    years_options = [2014, 2015, 2016, 2017, 'All']
+    year = st.selectbox('Select Year', years_options, index=4)
 
-# Filter data based on 'year' and 'market_demand'
-df_filtered = df_profit_all.copy()
-
-# Prepare year text for the title
-years_options = [2014, 2015, 2016, 2017, 'All']
-year_default_index = 4  # Default to 'All'
-market_demand_options = ['low', 'moderate', 'high']
-market_demand_default = 'low'
-
-# Create two columns for the filters below the plots
-filter_col_left, filter_col_right = st.columns(2)
-
-with filter_col_left:
-    st.markdown("### Filter Parameters")
-
-    # Year filter
-    year = st.radio('Select Year', years_options, index=year_default_index)
-
-    # Market Demand Radio Buttons
-    market_demand = st.radio(
+with col2:
+    # Market Demand dropdown
+    market_demand_options = ['low', 'moderate', 'high']
+    market_demand = st.selectbox(
         'Select Market Demand',
         options=market_demand_options,
-        index=market_demand_options.index(market_demand_default)
+        index=0
     )
 
+# Filter data based on selections
+df_filtered = df_profit_all.copy()
 if year != 'All':
     df_filtered = df_filtered[df_filtered['Year'] == int(year)]
 df_filtered = df_filtered[df_filtered['Market Demand'] == market_demand]
 
-year_text = 'All Years' if year == 'All' else str(year)
-
-# Get unique values for the boxplot filters from the filtered data
+# Get unique values for the boxplot filters
 unique_init_prob = sorted(df_filtered['Initial Probability'].unique())
 unique_v6_percent = sorted(df_filtered['V6 Percent'].unique())
 unique_quantiles = sorted(df_filtered['Quantile'].unique())
 
-with filter_col_right:
-    st.markdown("### Boxplot Filters")
-
-    # Create three columns for the boxplot filters
-    col_bp1, col_bp2, col_bp3 = st.columns(3)
-
-    with col_bp1:
-        # Initial Probability Segmented Control
+with col3:
+    # Create expander for boxplot filters
+    with st.expander("Boxplot Filters", expanded=True):
+        # Initial Probability dropdown
         init_prob_options = [format_prob(prob) for prob in unique_init_prob]
-        init_prob_selected_label = st.radio(
-            'Select Initial Probability of Disease (p₀)',
+        init_prob_selected_label = st.selectbox(
+            'Initial Probability of Disease (p₀)',
             options=init_prob_options
         )
         init_prob_selected = unique_init_prob[init_prob_options.index(init_prob_selected_label)]
 
-    with col_bp2:
-        # V6 Percent Segmented Control
+        # V6 Percent dropdown
         v6_percent_options = [f"{int(v6 * 100)}%" for v6 in unique_v6_percent]
-        v6_percent_selected_label = st.radio(
-            'Select V6 Percent',
+        v6_percent_selected_label = st.selectbox(
+            'V6 Percent',
             options=v6_percent_options
         )
         v6_percent_selected = unique_v6_percent[v6_percent_options.index(v6_percent_selected_label)]
 
-    with col_bp3:
-        # Quantile Segmented Control
-        quantile_selected = st.radio(
-            'Select Quantile',
+        # Quantile dropdown
+        quantile_selected = st.selectbox(
+            'Quantile',
             options=unique_quantiles
         )
 
 # Filter data for boxplot
-df_boxplot = df_filtered.copy()
-df_boxplot = df_boxplot[
-    (df_boxplot['Initial Probability'] == init_prob_selected) &
-    (df_boxplot['V6 Percent'] == v6_percent_selected) &
-    (df_boxplot['Quantile'] == quantile_selected)
+df_boxplot = df_filtered[
+    (df_filtered['Initial Probability'] == init_prob_selected) &
+    (df_filtered['V6 Percent'] == v6_percent_selected) &
+    (df_filtered['Quantile'] == quantile_selected)
 ]
 
-# Create the heatmap figure
-heatmap_fig = create_heatmap_figure(df_filtered, year_text, market_demand)
+# Prepare year text for the title
+year_text = 'All Years' if year == 'All' else str(year)
 
-# Create the boxplot figure
+# Create the figures
+heatmap_fig = create_heatmap_figure(df_filtered, year_text, market_demand)
 boxplot_fig = create_boxplot_figure(df_boxplot)
 
-# --- Display plots ---
+# Display plots
+col_left, col_right = st.columns([3, 1])
 
-with plots_placeholder:
-    # Create two columns for the heatmap and boxplot
-    col_left, col_right = st.columns([3, 1])  # Adjust the ratio as needed
+with col_left:
+    st.plotly_chart(heatmap_fig, use_container_width=True)
 
-    with col_left:
-        # Display the heatmap figure
-        st.plotly_chart(heatmap_fig, use_container_width=True)
-
-    with col_right:
-        # Display the boxplot figure
-        st.plotly_chart(boxplot_fig, use_container_width=True)
+with col_right:
+    st.plotly_chart(boxplot_fig, use_container_width=True)
