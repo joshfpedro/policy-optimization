@@ -454,7 +454,7 @@ v6_percent_selected_label = st.selectbox(
         'V6 Percent',
         options=v6_percent_options
     )
-    v6_percent_selected = unique_v6_percent[v6_percent_options.index(v6_percent_selected_label)]
+v6_percent_selected = unique_v6_percent[v6_percent_options.index(v6_percent_selected_label)]
 
 with col5:
     quantile_selected = st.selectbox(
