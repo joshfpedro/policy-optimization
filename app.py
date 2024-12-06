@@ -512,6 +512,76 @@ def create_spray_cost_relationship(df):
     
     return fig
 
+# --- Create filters at the top ---
+st.markdown("### Selection Parameters")
+
+# Create five columns for all filters
+col1, col2, col3, col4, col5 = st.columns(5)
+
+with col1:
+    # Year dropdown
+    years_options = [2014, 2015, 2016, 2017, 'All']
+    year = st.selectbox('Select Year', years_options, index=4)
+
+with col2:
+    # Market Demand dropdown
+    market_demand_options = ['low', 'moderate', 'high']
+    market_demand = st.selectbox(
+        'Select Market Demand',
+        options=market_demand_options,
+        index=0
+    )
+
+# Filter data based on selections
+df_filtered = df_profit_all.copy()
+if year != 'All':
+    df_filtered = df_filtered[df_filtered['Year'] == int(year)]
+df_filtered = df_filtered[df_filtered['Market Demand'] == market_demand]
+
+# Get unique values for the boxplot filters
+unique_init_prob = sorted(df_filtered['Initial Probability'].unique())
+unique_v6_percent = sorted(df_filtered['V6 Percent'].unique())
+unique_quantiles = sorted(df_filtered['Quantile'].unique())
+
+with col3:
+    # Initial Probability dropdown
+    init_prob_options = [format_prob(prob) for prob in unique_init_prob]
+    init_prob_selected_label = st.selectbox(
+        'Initial Probability of Disease (p₀)',
+        options=init_prob_options
+    )
+    init_prob_selected = unique_init_prob[init_prob_options.index(init_prob_selected_label)]
+
+with col4:
+    # V6 Percent dropdown
+    v6_percent_options = [f"{int(v6 * 100)}%" for v6 in unique_v6_percent]
+    v6_percent_selected_label = st.selectbox(
+        'V6 Percent',
+        options=v6_percent_options
+    )
+    v6_percent_selected = unique_v6_percent[v6_percent_options.index(v6_percent_selected_label)]
+
+with col5:
+    # Quantile dropdown
+    quantile_selected = st.selectbox(
+        'Quantile',
+        options=unique_quantiles
+    )
+
+# Filter data for boxplot
+df_boxplot = df_filtered[
+    (df_filtered['Initial Probability'] == init_prob_selected) &
+    (df_filtered['V6 Percent'] == v6_percent_selected) &
+    (df_filtered['Quantile'] == quantile_selected)
+]
+
+# Prepare year text for the title
+year_text = 'All Years' if year == 'All' else str(year)
+
+# Create the figures
+heatmap_fig = create_heatmap_figure(df_filtered, year_text, market_demand)
+boxplot_fig = create_boxplot_figure(df_boxplot)
+
 # Update the layout to include the new plot
 col_left, col_right = st.columns([3, 1])
 
