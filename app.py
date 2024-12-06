@@ -582,24 +582,19 @@ year_text = 'All Years' if year == 'All' else str(year)
 heatmap_fig = create_heatmap_figure(df_filtered, year_text, market_demand)
 boxplot_fig = create_boxplot_figure(df_boxplot)
 
-# Update the layout to include the new plot
+# Display plots
 col_left, col_right = st.columns([3, 1])
 
 with col_left:
     st.plotly_chart(heatmap_fig, use_container_width=True)
 
 # Create two columns for the smaller plots
-col_right_top, col_right_middle, col_right_bottom = st.columns([1, 1, 1])
+col_right_top, col_right_bottom = st.columns([1, 1])
 
 with col_right_top:
     st.plotly_chart(boxplot_fig, use_container_width=True)
 
-with col_right_middle:
+with col_right_bottom:
     # Create and display the disease incidence boxplot
     disease_boxplot_fig = create_disease_incidence_boxplot(df_boxplot)
     st.plotly_chart(disease_boxplot_fig, use_container_width=True)
-
-with col_right_bottom:
-    # Create and display the spray-cost relationship plot
-    spray_cost_fig = create_spray_cost_relationship(df_filtered)
-    st.plotly_chart(spray_cost_fig, use_container_width=True)
