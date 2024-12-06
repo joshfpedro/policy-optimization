@@ -357,13 +357,13 @@ def create_disease_incidence_boxplot(df_boxplot):
                     legendgroup=month,
                     legendgrouptitle_text=month,
                     marker_color=color,
-                    boxmean='sd',
+                    boxmean=True,  # Show mean
                     line=dict(color=color),
                     fillcolor=color,
                     marker=dict(size=3),
                     boxpoints='suspectedoutliers',
                     offsetgroup=month,
-                    showlegend=spray == sprays[0]  # Show legend only for first spray of each month
+                    showlegend=True if spray == sprays[0] else False  # Show legend only for first spray of each month
                 )
             )
     
@@ -496,5 +496,13 @@ col_left, col_right = st.columns([3, 1])
 with col_left:
     st.plotly_chart(heatmap_fig, use_container_width=True)
 
-with col_right:
+# Create two columns for the smaller plots
+col_right_top, col_right_bottom = st.columns([1, 1])
+
+with col_right_top:
     st.plotly_chart(boxplot_fig, use_container_width=True)
+
+with col_right_bottom:
+    # Create and display the disease incidence boxplot
+    disease_boxplot_fig = create_disease_incidence_boxplot(df_boxplot)
+    st.plotly_chart(disease_boxplot_fig, use_container_width=True)
