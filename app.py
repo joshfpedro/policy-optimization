@@ -357,13 +357,13 @@ def create_disease_incidence_boxplot(df_boxplot):
                     legendgroup=month,
                     legendgrouptitle_text=month,
                     marker_color=color,
-                    boxmean=True,  # Show mean
+                    boxmean='sd',
                     line=dict(color=color),
                     fillcolor=color,
                     marker=dict(size=3),
                     boxpoints='suspectedoutliers',
                     offsetgroup=month,
-                    showlegend=True if spray == sprays[0] else False  # Show legend only for first spray of each month
+                    showlegend=spray == sprays[0]  # Show legend only for first spray of each month
                 )
             )
     
