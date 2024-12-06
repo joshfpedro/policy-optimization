@@ -496,13 +496,5 @@ col_left, col_right = st.columns([3, 1])
 with col_left:
     st.plotly_chart(heatmap_fig, use_container_width=True)
 
-# Create two columns for the smaller plots
-col_right_top, col_right_bottom = st.columns([1, 1])
-
-with col_right_top:
+with col_right:
     st.plotly_chart(boxplot_fig, use_container_width=True)
-
-with col_right_bottom:
-    # Create and display the disease incidence boxplot
-    disease_boxplot_fig = create_disease_incidence_boxplot(df_boxplot)
-    st.plotly_chart(disease_boxplot_fig, use_container_width=True)
