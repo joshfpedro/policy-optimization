@@ -319,104 +319,25 @@ def create_boxplot_figure(df_boxplot):
             mirror=True,
             linecolor=dracula_font,
             tickfont=dict(color=dracula_font),
-            range=[v_min, v_max]
+            range=[v_min, v_max]  # Set y-axis range to match v_min and v_max
         )
     )
 
     return box_fig
 
-def create_disease_boxplot(df_filtered):
-    # Define Dracula color palette
-    dracula_bg = '#282a36'
-    dracula_font = '#f8f8f2'
-    
-    # Create the figure
-    fig = go.Figure()
-    
-    # Define colors for each month
-    month_colors = {'May': '#ff5555', 'June': '#50fa7b', 'July': '#8be9fd'}
-    months = ['May', 'June', 'July']
-    
-    # Add traces for each month
-    for month in months:
-        column_name = f'Disease Incidence {month}'
-        
-        fig.add_trace(
-            go.Box(
-                y=df_filtered[column_name],
-                x=df_filtered['Sprays in May'],
-                name=f'{month}',
-                marker_color=month_colors[month],
-                boxmean='sd',
-                marker=dict(size=3),
-                boxpoints='suspectedoutliers',
-                legendgroup=month
-            )
-        )
-    
-    fig.update_layout(
-        template=None,
-        plot_bgcolor=dracula_bg,
-        paper_bgcolor=dracula_bg,
-        font=dict(
-            color=dracula_font,
-            size=10
-        ),
-        title=dict(
-            text='Disease Incidence vs. Sprays in May',
-            font=dict(
-                color=dracula_font,
-                size=14
-            ),
-            x=0.5,
-            y=0.95,
-            xanchor='center',
-            yanchor='top'
-        ),
-        xaxis_title='Sprays in May',
-        yaxis_title='Disease Incidence',
-        xaxis=dict(
-            tickmode='linear',
-            showgrid=False,
-            zeroline=False,
-            showline=True,
-            mirror=True,
-            linecolor=dracula_font,
-            tickfont=dict(color=dracula_font)
-        ),
-        yaxis=dict(
-            showgrid=False,
-            zeroline=False,
-            showline=True,
-            mirror=True,
-            linecolor=dracula_font,
-            tickfont=dict(color=dracula_font),
-            range=[0, 1]
-        ),
-        showlegend=True,
-        legend=dict(
-            title='Month',
-            yanchor="top",
-            y=0.99,
-            xanchor="left",
-            x=1.02,
-            font=dict(size=10)
-        )
-    )
-    
-    return fig
-
 # --- Create filters at the top ---
 st.markdown("### Selection Parameters")
 
-# Create row for main filters
+# Create five columns for all filters
 col1, col2, col3, col4, col5 = st.columns(5)
 
 with col1:
+    # Year dropdown
     years_options = [2014, 2015, 2016, 2017, 'All']
     year = st.selectbox('Select Year', years_options, index=4)
 
 with col2:
+    # Market Demand dropdown
     market_demand_options = ['low', 'moderate', 'high']
     market_demand = st.selectbox(
         'Select Market Demand',
@@ -436,6 +357,7 @@ unique_v6_percent = sorted(df_filtered['V6 Percent'].unique())
 unique_quantiles = sorted(df_filtered['Quantile'].unique())
 
 with col3:
+    # Initial Probability dropdown
     init_prob_options = [format_prob(prob) for prob in unique_init_prob]
     init_prob_selected_label = st.selectbox(
         'Initial Probability of Disease (p₀)',
@@ -444,6 +366,7 @@ with col3:
     init_prob_selected = unique_init_prob[init_prob_options.index(init_prob_selected_label)]
 
 with col4:
+    # V6 Percent dropdown
     v6_percent_options = [f"{int(v6 * 100)}%" for v6 in unique_v6_percent]
     v6_percent_selected_label = st.selectbox(
         'V6 Percent',
@@ -452,12 +375,13 @@ with col4:
     v6_percent_selected = unique_v6_percent[v6_percent_options.index(v6_percent_selected_label)]
 
 with col5:
+    # Quantile dropdown
     quantile_selected = st.selectbox(
         'Quantile',
         options=unique_quantiles
     )
 
-# Filter data for profit boxplot
+# Filter data for boxplot
 df_boxplot = df_filtered[
     (df_filtered['Initial Probability'] == init_prob_selected) &
     (df_filtered['V6 Percent'] == v6_percent_selected) &
@@ -469,16 +393,13 @@ year_text = 'All Years' if year == 'All' else str(year)
 
 # Create the figures
 heatmap_fig = create_heatmap_figure(df_filtered, year_text, market_demand)
-profit_boxplot_fig = create_boxplot_figure(df_boxplot)
-disease_boxplot_fig = create_disease_boxplot(df_filtered)
+boxplot_fig = create_boxplot_figure(df_boxplot)
 
 # Display plots
-st.markdown("")  # Add some spacing
 col_left, col_right = st.columns([3, 1])
 
 with col_left:
     st.plotly_chart(heatmap_fig, use_container_width=True)
 
 with col_right:
-    st.plotly_chart(profit_boxplot_fig, use_container_width=True)
-    st.plotly_chart(disease_boxplot_fig, use_container_width=True)
+    st.plotly_chart(boxplot_fig, use_container_width=True)
