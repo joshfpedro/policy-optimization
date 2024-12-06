@@ -7,7 +7,7 @@ from plotly.subplots import make_subplots
 
 # Set the page configuration
 st.set_page_config(
-    page_title="Profit Percent Change Analysis",
+    page_title="Profit Percent Change Heatmap",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -39,14 +39,14 @@ def create_heatmap_figure(df_filtered, year_text, market_demand):
     # Format initial probabilities
     unique_init_prob_labels = [format_prob(prob) for prob in unique_init_prob]
 
-    # Define grid size
+    # Define the grid size
     n_rows = len(unique_v6_percent)
     n_cols = len(unique_init_prob)
 
     # Create subplot titles as empty strings
     subplot_titles = [''] * (n_rows * n_cols)
 
-    # Create figure with subplots
+    # Create the figure with subplots
     fig = make_subplots(
         rows=n_rows, cols=n_cols,
         subplot_titles=subplot_titles,
@@ -261,7 +261,7 @@ def create_boxplot_figure(df_boxplot):
     dracula_bg = '#282a36'
     dracula_font = '#f8f8f2'
 
-    # Create boxplot figure
+    # Create and display the boxplot
     box_fig = go.Figure()
 
     # Create boxplot traces
@@ -272,7 +272,7 @@ def create_boxplot_figure(df_boxplot):
                 y=df_spray['Mean Profit Percent Change'],
                 name=str(spray),
                 marker_color=vlag_colors[i],
-                boxmean=True,  # Show mean and standard deviation
+                boxmean='sd',  # Show mean and standard deviation
                 line=dict(color=vlag_colors[i]),
                 fillcolor=vlag_colors[i],
                 marker=dict(size=3),  # Reduce outlier marker size
@@ -281,7 +281,7 @@ def create_boxplot_figure(df_boxplot):
             )
         )
 
-    # Update layout
+    # Update layout with y-axis range matching v_min and v_max
     box_fig.update_layout(
         template=None,
         plot_bgcolor=dracula_bg,
@@ -580,27 +580,26 @@ year_text = 'All Years' if year == 'All' else str(year)
 
 # Create the figures
 heatmap_fig = create_heatmap_figure(df_filtered, year_text, market_demand)
-profit_boxplot_fig = create_boxplot_figure(df_boxplot)
-disease_boxplot_fig = create_disease_incidence_boxplot(df_boxplot)
-spray_cost_fig = create_spray_cost_relationship(df_filtered)
+boxplot_fig = create_boxplot_figure(df_boxplot)
 
-# Display plots
-st.markdown("")  # Add some spacing
-
-# Create columns for layout
+# Update the layout to include the new plot
 col_left, col_right = st.columns([3, 1])
 
 with col_left:
     st.plotly_chart(heatmap_fig, use_container_width=True)
 
-# Create three columns for the smaller plots on the right
+# Create two columns for the smaller plots
 col_right_top, col_right_middle, col_right_bottom = st.columns([1, 1, 1])
 
 with col_right_top:
-    st.plotly_chart(profit_boxplot_fig, use_container_width=True)
+    st.plotly_chart(boxplot_fig, use_container_width=True)
 
 with col_right_middle:
+    # Create and display the disease incidence boxplot
+    disease_boxplot_fig = create_disease_incidence_boxplot(df_boxplot)
     st.plotly_chart(disease_boxplot_fig, use_container_width=True)
 
 with col_right_bottom:
+    # Create and display the spray-cost relationship plot
+    spray_cost_fig = create_spray_cost_relationship(df_filtered)
     st.plotly_chart(spray_cost_fig, use_container_width=True)
