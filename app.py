@@ -18,6 +18,7 @@ def load_data():
     file_name = 'data/processed/simulations/simulations_dec6.parquet'
     df_profit_all = pd.read_parquet(file_name)
     df_profit_all['Quantile'] = df_profit_all['Quantile'].astype(str)
+    df_profit_all['Mean Cone Incidence'] = 1 - (1 - df_profit_all['Mean Cone Incidence']) ** (100 / 1.19)
     return df_profit_all
 
 df_profit_all = load_data()
@@ -547,6 +548,11 @@ df_filtered = df_profit_all.copy()
 if year != 'All':
     df_filtered = df_filtered[df_filtered['Year'] == int(year)]
 df_filtered = df_filtered[df_filtered['Market Demand'] == market_demand]
+
+# Calculate ranges for metrics from the full filtered dataset
+price_range = [df_filtered['Mean Price'].min(), df_filtered['Mean Price'].max()]
+yield_range = [df_filtered['Mean Yield'].min(), df_filtered['Mean Yield'].max()]
+cone_color_range = [df_filtered['Mean Cone Color'].min(), df_filtered['Mean Cone Color'].max()]
 
 # Get unique values for the boxplot filters
 unique_init_prob = sorted(df_filtered['Initial Probability'].unique())
