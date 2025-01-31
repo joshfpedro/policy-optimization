@@ -15,7 +15,7 @@ st.set_page_config(
 # Load data with caching to improve performance
 @st.cache_data
 def load_data():
-    file_name = 'data/processed/simulations/simulations_dec20_2.parquet'
+    file_name = 'data/processed/simulations/simulations_jan31.parquet'
     df_profit_all = pd.read_parquet(file_name)
     df_profit_all['Quantile'] = df_profit_all['Quantile'].astype(str)
     return df_profit_all
@@ -604,8 +604,8 @@ def create_fungicide_period_boxplot(df_boxplot):
 # --- Create filters at the top ---
 st.markdown("### Selection Parameters")
 
-# Create five columns for all filters
-col1, col2, col3, col4, col5 = st.columns(5)
+# Create six columns for all filters
+col1, col2, col3, col4, col5, col6 = st.columns(6)
 
 with col1:
     # Year dropdown
@@ -661,6 +661,24 @@ with col5:
         'Quantile',
         options=unique_quantiles
     )
+    
+with col6:
+    # Number of Leaves dropdown
+    unique_num_leaves = sorted(df_filtered['Number of Leaves'].unique())
+    num_leaves_options = [str(leaf) for leaf in unique_num_leaves]
+    num_leaves_selected = st.selectbox(
+        'Number of Leaves',
+        options=num_leaves_options
+    )
+    # Convert selected option back to appropriate type (e.g., int)
+    try:
+        num_leaves_selected = int(num_leaves_selected)
+    except ValueError:
+        num_leaves_selected = float(num_leaves_selected)
+    
+    # Apply the Number of Leaves filter
+    df_filtered = df_filtered[df_filtered['Number of Leaves'] == num_leaves_selected]
+
 
 # Filter data for boxplot
 df_boxplot = df_filtered[
