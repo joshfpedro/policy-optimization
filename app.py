@@ -12,17 +12,25 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Function to “fix” the Number of Leaves column values.
+def fix_number_of_leaves(x):
+    # If the value is a list and non-empty, return its first element.
+    if isinstance(x, list):
+        if len(x) > 0:
+            return x[0]
+        else:
+            return np.nan
+    else:
+        return x
+
 # Load data with caching to improve performance
 @st.cache_data
 def load_data():
     file_name = 'data/processed/simulations/simulations_jan31.parquet'
     df_profit_all = pd.read_parquet(file_name)
     df_profit_all['Quantile'] = df_profit_all['Quantile'].astype(str)
-    # Ensure that "Number of Leaves" is hashable:
-    # If the value is a list with one element, extract that element.
-    df_profit_all['Number of Leaves'] = df_profit_all['Number of Leaves'].apply(
-        lambda x: x[0] if isinstance(x, list) and len(x) == 1 else x
-    )
+    # Ensure that "Number of Leaves" is hashable by extracting a scalar value if needed.
+    df_profit_all['Number of Leaves'] = df_profit_all['Number of Leaves'].apply(fix_number_of_leaves)
     return df_profit_all
 
 df_profit_all = load_data()
@@ -660,18 +668,22 @@ with col5:
 
 with col6:
     # Number of Leaves dropdown
+    # We use .astype(str) to ensure the values are displayable in the dropdown.
     unique_num_leaves = sorted(df_filtered['Number of Leaves'].unique())
     num_leaves_options = [str(leaf) for leaf in unique_num_leaves]
     num_leaves_selected = st.selectbox(
         'Number of Leaves',
         options=num_leaves_options
     )
-    # Convert selected option back to appropriate type (e.g., int)
+    # Convert the selected option back to its original type if possible.
     try:
         num_leaves_selected = int(num_leaves_selected)
     except ValueError:
-        num_leaves_selected = float(num_leaves_selected)
-    
+        try:
+            num_leaves_selected = float(num_leaves_selected)
+        except ValueError:
+            # If conversion fails, keep as string.
+            pass
     # Apply the Number of Leaves filter
     df_filtered = df_filtered[df_filtered['Number of Leaves'] == num_leaves_selected]
 
