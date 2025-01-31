@@ -18,6 +18,11 @@ def load_data():
     file_name = 'data/processed/simulations/simulations_jan31.parquet'
     df_profit_all = pd.read_parquet(file_name)
     df_profit_all['Quantile'] = df_profit_all['Quantile'].astype(str)
+    # Ensure that "Number of Leaves" is hashable:
+    # If the value is a list with one element, extract that element.
+    df_profit_all['Number of Leaves'] = df_profit_all['Number of Leaves'].apply(
+        lambda x: x[0] if isinstance(x, list) and len(x) == 1 else x
+    )
     return df_profit_all
 
 df_profit_all = load_data()
