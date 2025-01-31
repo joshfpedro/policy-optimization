@@ -12,25 +12,12 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Function to “fix” the Number of Leaves column values.
-def fix_number_of_leaves(x):
-    # If the value is a list and non-empty, return its first element.
-    if isinstance(x, list):
-        if len(x) > 0:
-            return x[0]
-        else:
-            return np.nan
-    else:
-        return x
-
 # Load data with caching to improve performance
 @st.cache_data
 def load_data():
-    file_name = 'data/processed/simulations/simulations_jan31.parquet'
+    file_name = 'data/processed/simulations/simulations_jan31_1.parquet'
     df_profit_all = pd.read_parquet(file_name)
     df_profit_all['Quantile'] = df_profit_all['Quantile'].astype(str)
-    # Ensure that "Number of Leaves" is hashable by extracting a scalar value if needed.
-    df_profit_all['Number of Leaves'] = df_profit_all['Number of Leaves'].apply(fix_number_of_leaves)
     return df_profit_all
 
 df_profit_all = load_data()
@@ -535,6 +522,7 @@ def create_metric_boxplot(df_boxplot, metrics, title, y_label, color_palette='vl
     
     return fig
 
+# fungicide cost plot
 def create_fungicide_period_boxplot(df_boxplot):
     # Define Dracula color palette
     dracula_bg = '#282a36'
@@ -612,11 +600,12 @@ def create_fungicide_period_boxplot(df_boxplot):
     
     return fig
 
+
 # --- Create filters at the top ---
 st.markdown("### Selection Parameters")
 
-# Update to six columns to include 'Number of Leaves'
-col1, col2, col3, col4, col5, col6 = st.columns(6)
+# Create five columns for all filters
+col1, col2, col3, col4, col5 = st.columns(5)
 
 with col1:
     # Year dropdown
@@ -632,15 +621,24 @@ with col2:
         index=0
     )
 
-# Filter data based on Year and Market Demand selections
+# Filter data based on selections
 df_filtered = df_profit_all.copy()
 if year != 'All':
     df_filtered = df_filtered[df_filtered['Year'] == int(year)]
 df_filtered = df_filtered[df_filtered['Market Demand'] == market_demand]
 
+# Calculate ranges for metrics from the full filtered dataset
+price_range = [df_filtered['Mean Price'].min(), df_filtered['Mean Price'].max()]
+yield_range = [df_filtered['Mean Yield'].min(), df_filtered['Mean Yield'].max()]
+cone_color_range = [df_filtered['Mean Cone Color'].min(), df_filtered['Mean Cone Color'].max()]
+
+# Get unique values for the boxplot filters
+unique_init_prob = sorted(df_filtered['Initial Probability'].unique())
+unique_v6_percent = sorted(df_filtered['V6 Percent'].unique())
+unique_quantiles = sorted(df_filtered['Quantile'].unique())
+
 with col3:
     # Initial Probability dropdown
-    unique_init_prob = sorted(df_filtered['Initial Probability'].unique())
     init_prob_options = [format_prob(prob) for prob in unique_init_prob]
     init_prob_selected_label = st.selectbox(
         'Initial Probability of Disease (p₀)',
@@ -650,7 +648,6 @@ with col3:
 
 with col4:
     # V6 Percent dropdown
-    unique_v6_percent = sorted(df_filtered['V6 Percent'].unique())
     v6_percent_options = [f"{int(v6 * 100)}%" for v6 in unique_v6_percent]
     v6_percent_selected_label = st.selectbox(
         'V6 Percent',
@@ -660,51 +657,17 @@ with col4:
 
 with col5:
     # Quantile dropdown
-    unique_quantiles = sorted(df_filtered['Quantile'].unique())
     quantile_selected = st.selectbox(
         'Quantile',
         options=unique_quantiles
     )
 
-with col6:
-    # Number of Leaves dropdown
-    # We use .astype(str) to ensure the values are displayable in the dropdown.
-    unique_num_leaves = sorted(df_filtered['Number of Leaves'].unique())
-    num_leaves_options = [str(leaf) for leaf in unique_num_leaves]
-    num_leaves_selected = st.selectbox(
-        'Number of Leaves',
-        options=num_leaves_options
-    )
-    # Convert the selected option back to its original type if possible.
-    try:
-        num_leaves_selected = int(num_leaves_selected)
-    except ValueError:
-        try:
-            num_leaves_selected = float(num_leaves_selected)
-        except ValueError:
-            # If conversion fails, keep as string.
-            pass
-    # Apply the Number of Leaves filter
-    df_filtered = df_filtered[df_filtered['Number of Leaves'] == num_leaves_selected]
-
-# After all filters are applied, update unique values based on the filtered data
-unique_init_prob = sorted(df_filtered['Initial Probability'].unique())
-unique_v6_percent = sorted(df_filtered['V6 Percent'].unique())
-unique_quantiles = sorted(df_filtered['Quantile'].unique())
-unique_num_leaves = sorted(df_filtered['Number of Leaves'].unique())
-
-# Filter data for boxplot using all filters
+# Filter data for boxplot
 df_boxplot = df_filtered[
     (df_filtered['Initial Probability'] == init_prob_selected) &
     (df_filtered['V6 Percent'] == v6_percent_selected) &
-    (df_filtered['Quantile'] == quantile_selected) &
-    (df_filtered['Number of Leaves'] == num_leaves_selected)
+    (df_filtered['Quantile'] == quantile_selected)
 ]
-
-# Calculate ranges for metrics from the full filtered dataset
-price_range = [df_filtered['Mean Price'].min(), df_filtered['Mean Price'].max()]
-yield_range = [df_filtered['Mean Yield'].min(), df_filtered['Mean Yield'].max()]
-cone_color_range = [df_filtered['Mean Cone Color'].min(), df_filtered['Mean Cone Color'].max()]
 
 # Prepare year text for the title
 year_text = 'All Years' if year == 'All' else str(year)
