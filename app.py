@@ -15,10 +15,9 @@ st.set_page_config(
 # Load data with caching to improve performance
 @st.cache_data
 def load_data():
-    file_name = 'data/processed/simulations/simulations_dec6.parquet'
+    file_name = 'data/processed/simulations/simulations_dec20.parquet'
     df_profit_all = pd.read_parquet(file_name)
     df_profit_all['Quantile'] = df_profit_all['Quantile'].astype(str)
-    df_profit_all['Mean Cone Incidence'] = 1 - (1 - df_profit_all['Mean Cone Incidence']) ** (100 / 1.19)
     return df_profit_all
 
 df_profit_all = load_data()
