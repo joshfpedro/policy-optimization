@@ -522,85 +522,6 @@ def create_metric_boxplot(df_boxplot, metrics, title, y_label, color_palette='vl
     
     return fig
 
-# fungicide cost plot
-def create_fungicide_period_boxplot(df_boxplot):
-    # Define Dracula color palette
-    dracula_bg = '#282a36'
-    dracula_font = '#f8f8f2'
-    
-    # Define the periods and their corresponding columns
-    period_columns = {
-        'Early Season': 'Mean Fungicide Cost Early Season',
-        'May': 'Mean Fungicide Cost May',
-        'June': 'Mean Fungicide Cost June',
-        'July': 'Mean Fungicide Cost July',
-        'Late Season': 'Mean Fungicide Cost Late Season'
-    }
-    
-    # Create figure
-    fig = go.Figure()
-    
-    # Add a box plot for each period
-    colors = sns.color_palette('viridis', n_colors=len(period_columns)).as_hex()
-    
-    for (period, column), color in zip(period_columns.items(), colors):
-        fig.add_trace(
-            go.Box(
-                y=df_boxplot[column],
-                name=period,
-                marker_color=color,
-                boxmean=True,  # Show mean
-                line=dict(color=color),
-                fillcolor=color,
-                marker=dict(size=3),
-                boxpoints='suspectedoutliers'
-            )
-        )
-    
-    # Update layout
-    fig.update_layout(
-        template=None,
-        plot_bgcolor=dracula_bg,
-        paper_bgcolor=dracula_bg,
-        font=dict(
-            color=dracula_font,
-            size=10
-        ),
-        title=dict(
-            text='Fungicide Costs by Period',
-            font=dict(
-                color=dracula_font,
-                size=14
-            ),
-            x=0.5,
-            y=0.95,
-            xanchor='center',
-            yanchor='top'
-        ),
-        xaxis_title='Period',
-        yaxis_title='Fungicide Cost ($)',
-        xaxis=dict(
-            showgrid=False,
-            zeroline=False,
-            showline=True,
-            mirror=True,
-            linecolor=dracula_font,
-            tickfont=dict(color=dracula_font)
-        ),
-        yaxis=dict(
-            showgrid=False,
-            zeroline=False,
-            showline=True,
-            mirror=True,
-            linecolor=dracula_font,
-            tickfont=dict(color=dracula_font)
-        ),
-        showlegend=False
-    )
-    
-    return fig
-
-
 # --- Create filters at the top ---
 st.markdown("### Selection Parameters")
 
@@ -626,11 +547,6 @@ df_filtered = df_profit_all.copy()
 if year != 'All':
     df_filtered = df_filtered[df_filtered['Year'] == int(year)]
 df_filtered = df_filtered[df_filtered['Market Demand'] == market_demand]
-
-# Calculate ranges for metrics from the full filtered dataset
-price_range = [df_filtered['Mean Price'].min(), df_filtered['Mean Price'].max()]
-yield_range = [df_filtered['Mean Yield'].min(), df_filtered['Mean Yield'].max()]
-cone_color_range = [df_filtered['Mean Cone Color'].min(), df_filtered['Mean Cone Color'].max()]
 
 # Get unique values for the boxplot filters
 unique_init_prob = sorted(df_filtered['Initial Probability'].unique())
@@ -740,7 +656,3 @@ with col_metrics2:
         'viridis'
     )
     st.plotly_chart(cone_color_fig, use_container_width=True)
-    
-with col_metrics2:  # or wherever you want to place the plot
-    fungicide_period_fig = create_fungicide_period_boxplot(df_boxplot)
-    st.plotly_chart(fungicide_period_fig, use_container_width=True)
